@@ -1,10 +1,9 @@
-"""ChromaDB vector store + Sentence-Transformers embeddings (lazy-loaded).
+"""ChromaDB vector store + Chroma's ONNX MiniLM embeddings (lazy-loaded).
 
 Every chunk carries user_id + resume_id metadata, and every query filters on both,
-so one user can never retrieve another user's resume text.
+so one user can never retrieve another user's resume text. The built-in ONNX
+embedding function avoids loading PyTorch, which exceeds Render's 512 MB free tier.
 """
-from app.core.config import get_settings
-
 
 class RagStore:
     def __init__(self) -> None:
@@ -13,11 +12,13 @@ class RagStore:
     def _col(self):
         if self._collection is None:
             import chromadb
-            from chromadb.utils import embedding_functions
+            from chromadb.api.types import DefaultEmbeddingFunction
+
+            from app.core.config import get_settings
 
             s = get_settings()
             client = chromadb.PersistentClient(path=s.chroma_path)
-            ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=s.embedding_model)
+            ef = DefaultEmbeddingFunction()
             self._collection = client.get_or_create_collection(
                 "prepmind_docs", embedding_function=ef, metadata={"hnsw:space": "cosine"}
             )

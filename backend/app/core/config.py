@@ -15,7 +15,6 @@ class Settings(BaseSettings):
     mongo_db: str = "prepmind"
 
     chroma_path: str = "./chroma_data"
-    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     cors_origins: str = "http://localhost:5173"
     max_upload_mb: int = 5

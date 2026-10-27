@@ -158,8 +158,8 @@ export default function Dashboard({ user, onReady }) {
             {showJd && <textarea className="input mt-2" rows={4} maxLength={8000} placeholder="Paste the job description. Questions will lean towards it and you will see which of its skills your resume is missing." value={jd} onChange={(e) => setJd(e.target.value)} />}
 
             <div className="mt-4 flex items-center gap-3">
-              <button className="btn" disabled={!file || busy === "upload"} onClick={upload}>{busy === "upload" ? <><Spinner /> Reading your resume</> : "Analyse resume"}</button>
-              {busy === "upload" && <span className="text-xs text-ink/55">The first upload is slower while the embedding model loads.</span>}
+              <button className="btn" disabled={!file || busy === "upload"} onClick={upload}>{busy === "upload" ? <><Spinner /> Analysing your resume</> : "Analyse resume"}</button>
+              {busy === "upload" && <span className="text-xs text-ink/55">The free API may take a minute to wake and load the analysis model. Keep this page open.</span>}
             </div>
 
             {loading ? <LoadingGesture compact label="Loading your resumes…" /> : <ul className="mt-5 space-y-3">
