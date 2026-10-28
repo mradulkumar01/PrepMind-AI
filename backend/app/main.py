@@ -51,7 +51,19 @@ def health():
 
 @app.exception_handler(LLMUnavailable)
 async def _llm_down(_: Request, exc: LLMUnavailable):
-    return JSONResponse(status_code=503, content={"detail": "The AI model is unavailable. Is Ollama running?"})
+    status = exc.status_code
+    if status in (401, 403):
+        detail = "Gemini rejected the API key or access. Check LLM_API_KEY and the key's project/API access in Render."
+    elif status == 404:
+        detail = "Gemini could not find the configured model or endpoint. Check LLM_MODEL and LLM_BASE_URL in Render."
+    elif status == 429:
+        detail = "Gemini rate limit or quota reached. Check the Gemini API usage and billing limits."
+    elif status is not None and 400 <= status < 500:
+        detail = f"Gemini rejected the request (HTTP {status}). Check the model and request settings."
+    else:
+        detail = "Could not reach the AI provider. Check the Gemini endpoint and try again."
+    log.warning("LLM request unavailable; provider_status=%s error=%s", status, exc)
+    return JSONResponse(status_code=503, content={"detail": detail})
 
 
 @app.exception_handler(LLMBadOutput)

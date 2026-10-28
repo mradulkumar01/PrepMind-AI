@@ -15,6 +15,10 @@ class LLMError(RuntimeError):
 class LLMUnavailable(LLMError):
     """LLM server unreachable or returned an error."""
 
+    def __init__(self, message: str, *, status_code: int | None = None):
+        super().__init__(message)
+        self.status_code = status_code
+
 
 class LLMBadOutput(LLMError):
     """LLM replied, but not in the JSON shape we asked for."""
@@ -35,20 +39,30 @@ class OpenAICompatibleClient(LLMClient):
     def complete(self, system: str, user: str, *, task: str, hints: dict | None = None) -> str:
         import httpx
 
+        payload = {
+            "model": self.model,
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+            "max_tokens": 700,
+        }
+        # Gemini 3.x recommends the model's default sampling settings. Older
+        # OpenAI-compatible providers still use the app's lower temperature.
+        if not self.model.lower().startswith("gemini-"):
+            payload["temperature"] = 0.4
+
         try:
             r = httpx.post(
                 f"{self.base_url}/chat/completions",
                 headers={"Authorization": f"Bearer {self.api_key}"},
-                json={
-                    "model": self.model,
-                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-                    "temperature": 0.4,
-                    "max_tokens": 700,
-                },
+                json=payload,
                 timeout=self.timeout,
             )
             r.raise_for_status()
             return r.json()["choices"][0]["message"]["content"]
+        except httpx.HTTPStatusError as exc:
+            raise LLMUnavailable(
+                f"LLM provider returned HTTP {exc.response.status_code}",
+                status_code=exc.response.status_code,
+            ) from exc
         except (httpx.HTTPError, KeyError, IndexError, ValueError) as exc:
             raise LLMUnavailable(f"LLM request failed: {exc.__class__.__name__}") from exc
 
