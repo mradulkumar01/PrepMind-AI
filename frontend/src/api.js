@@ -1,6 +1,7 @@
 // Thin fetch wrapper. NOTE: the JWT is kept in localStorage for simplicity (prototype);
 // a production app would prefer httpOnly cookies. React escapes all text, so LLM output is rendered as plain text.
 const KEY = "prepmind_token";
+const API_ORIGIN = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 export const getToken = () => localStorage.getItem(KEY);
 export const setToken = (t) => (t ? localStorage.setItem(KEY, t) : localStorage.removeItem(KEY));
 
@@ -18,7 +19,7 @@ async function request(path, { method = "GET", body, form } = {}) {
   if (form) payload = form;
   else if (body) { headers["Content-Type"] = "application/json"; payload = JSON.stringify(body); }
 
-  const res = await fetch(`/api${path}`, { method, headers, body: payload });
+  const res = await fetch(`${API_ORIGIN}/api${path}`, { method, headers, body: payload });
   if (res.status === 401 && token) window.dispatchEvent(new Event("auth:logout"));
   if (res.status === 204) return null;
   const data = await res.json().catch(() => null);
