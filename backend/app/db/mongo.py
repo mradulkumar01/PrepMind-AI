@@ -22,6 +22,9 @@ def ensure_indexes() -> None:
     db = get_db()
     try:
         db.users.create_index("email", unique=True)
+        db.login_events.create_index([("created_at", DESCENDING)], expireAfterSeconds=90 * 24 * 60 * 60)
+        db.login_events.create_index([("user_id", ASCENDING), ("created_at", DESCENDING)])
+        db.admin_audit_log.create_index([("target_user_id", ASCENDING), ("created_at", DESCENDING)])
         db.resumes.create_index("user_id")
         db.interviews.create_index([("user_id", ASCENDING), ("created_at", DESCENDING)])
         db.questions.create_index("interview_id")

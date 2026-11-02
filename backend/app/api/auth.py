@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pymongo.errors import DuplicateKeyError
 
-from app.api.deps import current_user
+from app.api.deps import current_user, is_admin_email
 from app.core.security import create_access_token, hash_password, verify_password
 from app.core.utils import utcnow
 from app.db.mongo import get_db
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 def _user_out(u: dict) -> UserOut:
-    return UserOut(id=str(u["_id"]), name=u["name"], email=u["email"])
+    return UserOut(id=str(u["_id"]), name=u["name"], email=u["email"], is_admin=is_admin_email(u["email"]))
 
 
 @router.post("/register", response_model=TokenOut, status_code=201)
@@ -21,6 +21,7 @@ def register(body: RegisterIn):
         "email": body.email.lower(),
         "password_hash": hash_password(body.password),
         "created_at": utcnow(),
+        "is_active": True,
     }
     try:
         res = get_db().users.insert_one(doc)
@@ -32,9 +33,14 @@ def register(body: RegisterIn):
 
 @router.post("/login", response_model=TokenOut)
 def login(body: LoginIn):
-    user = get_db().users.find_one({"email": body.email.lower()})
-    if not user or not verify_password(body.password, user["password_hash"]):
+    db = get_db()
+    user = db.users.find_one({"email": body.email.lower()})
+    if not user or user.get("is_active", True) is False or not verify_password(body.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid email or password")  # same message for both cases
+    signed_in_at = utcnow()
+    db.users.update_one({"_id": user["_id"]}, {"$set": {"last_login_at": signed_in_at}})
+    db.login_events.insert_one({"user_id": str(user["_id"]), "created_at": signed_in_at})
+    user["last_login_at"] = signed_in_at
     return TokenOut(access_token=create_access_token(str(user["_id"])), user=_user_out(user))
 
 

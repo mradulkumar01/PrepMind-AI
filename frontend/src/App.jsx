@@ -4,6 +4,7 @@ import { api, getToken, setToken } from "./api.js";
 import Auth from "./pages/Auth.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Profile from "./pages/Profile.jsx";
+import AdminUsers from "./pages/AdminUsers.jsx";
 import Interview from "./pages/Interview.jsx";
 import Results from "./pages/Results.jsx";
 import ArenaModule from "./pages/arena/ArenaModule.jsx";
@@ -56,6 +57,7 @@ export default function App() {
               <Link to="/" className="nav-action nav-home" aria-label="Return to the main PrepMind page"><span aria-hidden="true">⌂</span><span>Home</span></Link>
               <Link to="/profile" className="nav-action nav-profile"><span aria-hidden="true">◎</span><span>Profile</span></Link>
               <Link to="/arena" className="nav-action nav-arena"><span aria-hidden="true">⌘</span><span>Coding Arena</span></Link>
+              {user.is_admin && <Link to="/admin" className="nav-action nav-profile"><span aria-hidden="true">♙</span><span>Admin</span></Link>}
               <span className="hidden text-ink/70 md:inline">{user.name}</span>
               <button className="nav-action nav-logout" onClick={logout}><span aria-hidden="true">↗</span><span>Log out</span></button>
             </div>
@@ -67,6 +69,7 @@ export default function App() {
           <Route path="/login" element={<Auth onAuth={onAuth} />} />
           <Route path="/" element={guard(<Dashboard user={user} onReady={finishLoginLoading} />)} />
           <Route path="/profile" element={guard(<Profile user={user} />)} />
+          <Route path="/admin" element={guard(<AdminUsers />)} />
           <Route path="/interview/:id" element={guard(<Interview />)} />
           <Route path="/results/:id" element={guard(<Results />)} />
           <Route path="/arena/*" element={guard(<ArenaModule user={user} />)} />

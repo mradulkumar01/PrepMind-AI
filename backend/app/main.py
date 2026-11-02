@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pymongo.errors import PyMongoError
 
-from app.api import arena, auth, company_tracks, interviews, learning, prep_space, resumes, speech
+from app.api import admin, arena, auth, company_tracks, interviews, learning, prep_space, resumes, speech
 from app.core.config import get_settings
 from app.db.mongo import ensure_indexes
 from app.services.llm import LLMBadOutput, LLMUnavailable
@@ -35,6 +35,7 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 app.include_router(auth.router)
+app.include_router(admin.router)
 app.include_router(company_tracks.router)
 app.include_router(resumes.router)
 app.include_router(interviews.router)

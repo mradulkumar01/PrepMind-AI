@@ -30,6 +30,22 @@ class UserOut(BaseModel):
     id: str
     name: str
     email: str
+    is_admin: bool = False
+
+
+class AdminUserUpdateIn(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=80)
+    is_active: bool | None = None
+
+    @field_validator("name")
+    @classmethod
+    def _clean_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        value = value.strip()
+        if not value:
+            raise ValueError("Name cannot be blank")
+        return value
 
 
 class TokenOut(BaseModel):
