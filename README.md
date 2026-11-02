@@ -2,6 +2,14 @@
 
 A Multimodal Adaptive AI Mock Interview and Career Preparation System (B.Tech final-year project, IT).
 
+## Live deployment
+
+- **Web app:** [https://prepmind-ai-frontend.onrender.com/](https://prepmind-ai-frontend.onrender.com/)
+- **API health:** [https://prepmind-ai-loe6.onrender.com/api/health](https://prepmind-ai-loe6.onrender.com/api/health)
+- **API documentation:** [https://prepmind-ai-loe6.onrender.com/docs](https://prepmind-ai-loe6.onrender.com/docs)
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the deployed service URLs and release notes.
+
 New contributors: start with [START_HERE.md](START_HERE.md), then use [PROJECT_STATUS_CHECKLIST.md](PROJECT_STATUS_CHECKLIST.md) for the audited implementation status and next priorities.
 
 > **Scores are practice feedback, not a measure of employability.** The system never infers honesty,
