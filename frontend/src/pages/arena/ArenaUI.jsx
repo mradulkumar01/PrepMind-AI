@@ -1,7 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 
 const links = [
-  ["/arena", "Overview", true], ["/arena/problems", "Problems"], ["/arena/hackathons", "Hackathons"], ["/arena/progress", "Progress"], ["/arena/admin", "Admin"],
+  ["/arena", "Overview", true], ["/arena/problems", "Problems"], ["/arena/hackathons", "Hackathons"], ["/arena/friends", "Friend duels"], ["/arena/progress", "Progress"], ["/arena/admin", "Admin"],
 ];
 
 export function ArenaFrame({ children, eyebrow = "PREPMIND AI · CODING ARENA", title, description, actions }) {
@@ -17,7 +17,7 @@ export function ArenaFrame({ children, eyebrow = "PREPMIND AI · CODING ARENA", 
         </div>
         {(title || actions) && <div className="flex flex-wrap items-end justify-between gap-4 py-7 sm:py-9"><div><p className="text-[10px] font-bold uppercase tracking-[.25em] text-cyan-300/80">{eyebrow}</p>{title && <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">{title}</h1>}{description && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">{description}</p>}</div>{actions && <div>{actions}</div>}</div>}
         {children}
-        <footer className="mt-12 border-t border-white/10 pt-5 text-center text-xs text-slate-500">Arena scores and rankings come from saved submissions. Code runs in the configured isolated Judge0 service.</footer>
+        <footer className="mt-12 border-t border-white/10 pt-5 text-center text-xs text-slate-500">XP is awarded once per unique accepted problem (Easy 25, Medium 50, Hard 100). Contest points are fixed by difficulty; ranks use score, then earliest server-recorded accepted time. Code runs in the configured isolated Judge0 service.</footer>
       </div>
     </div>
   );

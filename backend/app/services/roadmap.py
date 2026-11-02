@@ -1,6 +1,8 @@
 """Build a small, explainable practice roadmap from persisted user data."""
 import hashlib
 
+from app.core.utils import utcnow
+
 
 def _task_id(kind: str, topic: str) -> str:
     return hashlib.sha256(f"{kind}:{topic.casefold()}".encode()).hexdigest()[:20]
@@ -45,3 +47,21 @@ def build_tasks(resumes: list[dict], interviews: list[dict]) -> list[dict]:
     tasks = list(candidates.values())
     tasks.sort(key=lambda item: (item["priority"] != "high", item["title"].casefold()))
     return tasks[:12]
+
+
+def refresh_learning_plan(db, user_id: str) -> dict:
+    """Regenerate the account's plan after a completed interview without losing checkmarks."""
+    resumes = list(db.resumes.find({"user_id": user_id}).sort("created_at", -1).limit(20))
+    interviews = list(db.interviews.find({"user_id": user_id, "status": "completed", "summary": {"$ne": None}}).sort("completed_at", -1).limit(100))
+    previous = db.learning_plans.find_one({"user_id": user_id}) or {}
+    prior = {task["id"]: task for task in previous.get("tasks", [])}
+    tasks = build_tasks(resumes, interviews)
+    for task in tasks:
+        old = prior.get(task["id"])
+        if old:
+            task["completed"] = bool(old.get("completed"))
+            task["updated_at"] = old.get("updated_at")
+    plan = {"user_id": user_id, "tasks": tasks, "updated_at": utcnow()}
+    db.learning_plans.replace_one({"user_id": user_id}, plan, upsert=True)
+    plan.pop("_id", None)
+    return plan

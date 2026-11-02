@@ -6,8 +6,12 @@ import { Bar, Chip, Icon, Radar, ScoreRing, Spinner, toneColor } from "../compon
 export default function Results() {
   const { id } = useParams();
   const [data, setData] = useState(null);
+  const [roadmap, setRoadmap] = useState([]);
   const [err, setErr] = useState("");
-  useEffect(() => { api.interview(id).then(setData).catch((e) => setErr(e.message)); }, [id]);
+  useEffect(() => {
+    api.interview(id).then(setData).catch((e) => setErr(e.message));
+    api.learningPlan().then((result) => setRoadmap(result.tasks || [])).catch(() => {});
+  }, [id]);
 
   if (err) return <p role="alert" className="rounded-xl bg-coral/10 p-4 text-coral">{err}</p>;
   if (!data) return <div className="grid place-items-center py-24 text-ink/50"><Spinner className="h-6 w-6" /></div>;
@@ -15,6 +19,12 @@ export default function Results() {
   if (!s) return <p className="card">This interview isn't finished yet. <Link className="font-semibold text-brand underline" to={`/interview/${id}`}>Continue it</Link></p>;
 
   const mock = data.questions.some((q) => q.answer?.evaluator === "mock-heuristic");
+  const skillProfile = s.skill_profile || {
+    technical_depth: s.criteria_avg?.technical,
+    communication: s.criteria_avg?.communication,
+    reasoning: s.criteria_avg?.problem_solving,
+    problem_solving: s.criteria_avg?.problem_solving,
+  };
   const headline = s.overall >= 70 ? "A strong practice round" : s.overall >= 50 ? "A solid base with a few gaps" : "Useful practice: focus on the weaker topics";
 
   return (
@@ -55,6 +65,17 @@ export default function Results() {
           </div>
         </section>
       </div>
+
+      <section className="card">
+        <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-brand">After this interview</p><h2 className="mt-1 text-xl font-bold">Your skill profile</h2></div><span className="rounded-full bg-brand-light px-3 py-1 text-xs font-semibold text-brand-dark">Answer-quality rubric</span></div>
+        <p className="mt-2 max-w-3xl text-xs leading-relaxed text-ink/55">Each dimension scores only the written answer or its transcript. “Confidence” means clarity of claims, supporting evidence, and calibrated uncertainty in the explanation; it does not infer personality, emotion, or facial/voice signals.</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{[["Communication", skillProfile.communication], ["Technical depth", skillProfile.technical_depth], ["Reasoning", skillProfile.reasoning], ["Problem solving", skillProfile.problem_solving], ["Confidence in explanation", skillProfile.confidence]].map(([label, value]) => <div key={label} className="rounded-xl border border-brand/10 bg-canvas p-3"><div className="flex items-center justify-between gap-2"><span className="text-xs font-semibold">{label}</span><strong className="font-display text-lg">{value == null ? "—" : Math.round(value)}</strong></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-ink/10"><div className="h-full rounded-full bg-gradient-to-r from-brand to-[#e898bf]" style={{ width: `${Math.max(0, Math.min(100, Number(value || 0)))}%` }}/></div></div>)}</div>
+      </section>
+
+      <section className="card">
+        <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-brand">Next practice</p><h2 className="mt-1 text-xl font-bold">Personalized preparation roadmap</h2></div><Link to="/" className="text-sm font-semibold text-brand underline">Open dashboard</Link></div>
+        {roadmap.length ? <ul className="mt-4 grid gap-3 md:grid-cols-2">{roadmap.filter((task) => !task.completed).slice(0, 4).map((task) => <li key={task.id} className="rounded-xl border border-brand/10 bg-canvas p-4"><p className="font-semibold">{task.title}</p><p className="mt-1 text-sm text-ink/60">{task.reason}</p><p className="mt-2 text-xs font-semibold text-brand">Focus: {task.topic}</p></li>)}</ul> : <p className="mt-3 text-sm text-ink/55">Your roadmap will appear here as you complete interviews and add a target job description.</p>}
+      </section>
 
       <section className="card">
         <h2 className="mb-3 text-xl font-bold">Review your answers</h2>

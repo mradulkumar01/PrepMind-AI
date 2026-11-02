@@ -42,6 +42,10 @@ def ensure_indexes() -> None:
         db.contest_scores.create_index([("contest_id", ASCENDING), ("participant_id", ASCENDING)], unique=True)
         db.contest_scores.create_index([("contest_id", ASCENDING), ("score", DESCENDING), ("last_accepted_at", ASCENDING)])
         db.arena_rate_events.create_index("created_at", expireAfterSeconds=300)
+        db.arena_xp_awards.create_index([("user_id", ASCENDING), ("problem_slug", ASCENDING)], unique=True)
+        db.duels.create_index("invite_code", unique=True)
+        db.duels.create_index([("member_ids", ASCENDING), ("created_at", DESCENDING)])
+        db.duel_solved.create_index([("duel_id", ASCENDING), ("user_id", ASCENDING)], unique=True)
         db.prep_spaces.create_index("user_id", unique=True)
     except PyMongoError as exc:
         log.error("MongoDB not reachable: %s. Start it with `docker compose up -d`.", exc)

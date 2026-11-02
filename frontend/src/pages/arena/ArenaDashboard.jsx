@@ -20,13 +20,14 @@ export default function ArenaDashboard({ user }) {
   const progressHref = data.last_attempted ? `/arena/problems/${data.last_attempted}` : "/arena/problems";
   const statsCards = [
     ["Problems solved", stats.solved, `${stats.solved_by_difficulty.Easy} easy · ${stats.solved_by_difficulty.Medium} medium · ${stats.solved_by_difficulty.Hard} hard`, "violet"],
+    ["XP earned", stats.xp ?? 0, `One-time credit for each unique accepted solve · ${stats.duel_wins || 0} duel wins`, "cyan"],
     ["Current streak", `${stats.streak} days`, `Longest: ${stats.longest_streak} days`, "cyan"],
     ["Submissions", stats.submissions, `${stats.acceptance_rate == null ? "No rate yet" : `${stats.acceptance_rate}% accepted`}`, "pink"],
-    ["Global rank", stats.global_rank ? `#${stats.global_rank}` : "—", stats.contest_rating == null ? "Contest rating unavailable" : `Rating ${stats.contest_rating}`, "cyan"],
+    ["Global XP rank", stats.global_rank ? `#${stats.global_rank}` : "—", "XP first, then solved count; shared rules for everyone", "violet"],
   ];
 
-  return <ArenaFrame eyebrow="YOUR DEVELOPER WORKSPACE" title={`Welcome back, ${user?.name?.split(" ")[0] || data.name}`} description="Build problem-solving momentum with daily practice, verified judging, and friendly contests." actions={<ArenaButton to={progressHref} variant="subtle">{data.last_attempted ? "Continue solving →" : "Explore problems →"}</ArenaButton>}>
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{statsCards.map(([label, value, footnote, accent]) => <StatCard key={label} label={label} value={value} footnote={footnote} accent={accent} />)}</div>
+  return <ArenaFrame eyebrow="YOUR DEVELOPER WORKSPACE" title={`Welcome back, ${user?.name?.split(" ")[0] || data.name}`} description="Build problem-solving momentum with timed challenges, visible scoring rules, XP, and friendly head-to-head duels." actions={<ArenaButton to={progressHref} variant="subtle">{data.last_attempted ? "Continue solving →" : "Explore problems →"}</ArenaButton>}>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">{statsCards.map(([label, value, footnote, accent]) => <StatCard key={label} label={label} value={value} footnote={footnote} accent={accent} />)}</div>
 
     <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,.8fr)]">
       <ArenaCard className="arena-grid relative overflow-hidden">
@@ -52,6 +53,7 @@ export default function ArenaDashboard({ user }) {
       </ArenaCard>
       <ArenaCard><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.2em] text-violet-300">Compete</p><h2 className="mt-1 text-lg font-bold">Upcoming contests</h2></div><Link to="/arena/hackathons" className="text-xs text-slate-400 hover:text-white">All events →</Link></div>
         <div className="mt-4 space-y-3">{data.contests.slice(0, 3).map((contest) => <Link key={contest.id} to={`/arena/hackathons/${contest.slug}`} className="block rounded-xl border border-white/[.06] bg-white/[.025] p-3 transition hover:border-cyan-300/20"><span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{contest.title}</span><span className={`text-[10px] font-bold uppercase ${contest.status === "live" ? "text-rose-300" : "text-cyan-300"}`}>{contest.status}</span></span><span className="mt-2 block text-xs text-slate-500">{new Date(contest.start_at).toLocaleString()} · {contest.duration_minutes} min</span></Link>)}{!data.contests.length && <p className="py-5 text-sm text-slate-500">No upcoming contests are scheduled.</p>}</div>
+        <Link to="/arena/friends" className="mt-4 block rounded-xl border border-violet-300/15 bg-violet-300/[.05] p-3 text-sm font-semibold text-violet-100 transition hover:bg-violet-300/10">Challenge a friend · one problem, one timer →</Link>
       </ArenaCard>
     </div>
 

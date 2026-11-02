@@ -7,10 +7,12 @@ from app.db.rag_store import rag_store
 from app.models.schemas import AnswerIn, FinishInterviewIn, StartInterviewIn
 from app.services.adaptive import next_difficulty
 from app.services.analytics import summarize
+from app.services.company_tracks import TRACKS
 from app.services.evaluator import evaluate_answer
 from app.services.llm import get_llm
 from app.services.planner import plan_topic
 from app.services.question_generator import generate_followup, generate_question
+from app.services.roadmap import refresh_learning_plan
 from app.services.scoring import overall_score
 
 router = APIRouter(prefix="/api/interviews", tags=["interviews"])
@@ -37,6 +39,11 @@ def _new_question(interview: dict, resume: dict, difficulty: str) -> dict:
     kind, topic = plan_topic(interview["interview_type"], main_count, resume["skills"])
     if interview.get("topics"):
         topic = interview["topics"][main_count % len(interview["topics"])]
+    elif interview.get("priority_topics"):
+        topic = interview["priority_topics"][0]
+    track = TRACKS.get(interview.get("company_track", "general"), TRACKS["general"])
+    if not interview.get("topics") and not interview.get("priority_topics") and interview.get("company_track") != "general":
+        topic = track["topics"][main_count % len(track["topics"])]
     uid = interview["user_id"]
     rid = interview["resume_id"]
     retrieval_query = f"{interview.get('target_role', '')} {topic}".strip()
@@ -44,7 +51,7 @@ def _new_question(interview: dict, resume: dict, difficulty: str) -> dict:
     jd_excerpts = rag_store.query(user_id=uid, resume_id=rid, query=retrieval_query, k=2, kind="jd") if resume["has_jd"] else []
     gen = generate_question(
         llm, kind=kind, topic=topic, target_role=interview.get("target_role", ""), difficulty=difficulty, excerpts=excerpts,
-        jd_excerpts=jd_excerpts, previous_questions=[q["text"] for q in prior],
+        jd_excerpts=jd_excerpts, previous_questions=[q["text"] for q in prior], company_guidance=track["guidance"],
     )
     doc = {
         "interview_id": iid, "index": len(prior), "kind": kind, "difficulty": difficulty,
@@ -60,9 +67,12 @@ def start_interview(body: StartInterviewIn, user: dict = Depends(current_user)):
     resume = db.resumes.find_one({"_id": to_oid(body.resume_id), "user_id": str(user["_id"])})
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
+    saved_plan = db.learning_plans.find_one({"user_id": str(user["_id"])}) or {}
+    priority_topics = [task["topic"] for task in saved_plan.get("tasks", []) if not task.get("completed") and task.get("priority") == "high"][:2]
     interview = {
         "user_id": str(user["_id"]), "resume_id": body.resume_id, "interview_type": body.interview_type,
-        "target_role": body.target_role, "topics": body.topics,
+        "target_role": body.target_role, "topics": body.topics, "company_track": body.company_track,
+        "priority_topics": priority_topics,
         "num_questions": body.num_questions, "status": "in_progress", "current_difficulty": body.difficulty,
         "summary": None, "created_at": utcnow(), "completed_at": None,
     }
@@ -107,12 +117,13 @@ def get_interview(interview_id: str, user: dict = Depends(current_user)):
     if interview["status"] == "in_progress" and questions and all(str(q["_id"]) in answers for q in questions):
         if len(answers) >= interview["num_questions"]:
             by_id = {str(q["_id"]): q for q in questions}
-            rows = [{"topic": by_id[a["question_id"]]["topic"], "scores": a["scores"], "overall": a["overall"]} for a in answers.values()]
+            rows = [{"topic": by_id[a["question_id"]]["topic"], "scores": a["scores"], "skill_profile": a.get("skill_profile"), "overall": a["overall"]} for a in answers.values()]
             summary = summarize(rows)
             db.interviews.update_one(
                 {"_id": interview["_id"], "user_id": str(user["_id"]), "status": "in_progress"},
                 {"$set": {"status": "completed", "summary": summary, "completed_at": utcnow()}},
             )
+            refresh_learning_plan(db, str(user["_id"]))
             interview = _owned_interview(interview_id, user)
         else:
             last_question = questions[-1]
@@ -163,6 +174,7 @@ def submit_answer(interview_id: str, body: AnswerIn, user: dict = Depends(curren
         "interview_id": iid, "question_id": body.question_id, "text": body.answer_text,
         "answer_mode": body.answer_mode,
         "scores": ev["scores"], "overall": overall, "feedback": ev["feedback"],
+        "skill_profile": ev["skill_profile"],
         "strengths": ev["strengths"], "improvements": ev["improvements"], "sample_answer": ev["sample_answer"],
         "evaluator": ev["evaluator"], "created_at": utcnow(),
     }
@@ -171,7 +183,7 @@ def submit_answer(interview_id: str, body: AnswerIn, user: dict = Depends(curren
     answers = list(db.answers.find({"interview_id": iid}).sort("created_at", 1))
     new_diff = next_difficulty(interview["current_difficulty"], [a["overall"] for a in answers])
     result = {
-        "evaluation": {**{k: ans[k] for k in ("scores", "overall", "feedback", "strengths", "improvements", "sample_answer", "evaluator")},
+        "evaluation": {**{k: ans[k] for k in ("scores", "skill_profile", "overall", "feedback", "strengths", "improvements", "sample_answer", "evaluator")},
                        "expected_points": q["expected_points"]},
         "difficulty_next": new_diff,
         "completed": False, "summary": None, "next_question": None,
@@ -179,12 +191,13 @@ def submit_answer(interview_id: str, body: AnswerIn, user: dict = Depends(curren
 
     if len(answers) >= interview["num_questions"]:
         questions = {str(x["_id"]): x for x in db.questions.find({"interview_id": iid})}
-        rows = [{"topic": questions[a["question_id"]]["topic"], "scores": a["scores"], "overall": a["overall"]} for a in answers]
+        rows = [{"topic": questions[a["question_id"]]["topic"], "scores": a["scores"], "skill_profile": a.get("skill_profile"), "overall": a["overall"]} for a in answers]
         summary = summarize(rows)
         db.interviews.update_one(
             {"_id": interview["_id"]},
             {"$set": {"status": "completed", "summary": summary, "completed_at": utcnow(), "current_difficulty": new_diff}},
         )
+        refresh_learning_plan(db, str(user["_id"]))
         result.update(completed=True, summary=summary)
         return result
 
@@ -220,6 +233,7 @@ def finish_interview(interview_id: str, body: FinishInterviewIn | None = None, u
             ans = {
                 "interview_id": iid, "question_id": draft.question_id, "text": draft.answer_text,
                 "answer_mode": draft.answer_mode, "scores": ev["scores"], "overall": overall_score(ev["scores"]),
+                "skill_profile": ev["skill_profile"],
                 "feedback": ev["feedback"], "strengths": ev["strengths"], "improvements": ev["improvements"],
                 "sample_answer": ev["sample_answer"], "evaluator": ev["evaluator"], "created_at": utcnow(),
             }
@@ -228,7 +242,7 @@ def finish_interview(interview_id: str, body: FinishInterviewIn | None = None, u
     questions = {str(q["_id"]): q for q in db.questions.find({"interview_id": iid})}
     answers = list(db.answers.find({"interview_id": iid}).sort("created_at", 1))
     rows = [
-        {"topic": questions[a["question_id"]]["topic"], "scores": a["scores"], "overall": a["overall"]}
+        {"topic": questions[a["question_id"]]["topic"], "scores": a["scores"], "skill_profile": a.get("skill_profile"), "overall": a["overall"]}
         for a in answers if a["question_id"] in questions
     ]
     summary = summarize(rows)
@@ -241,7 +255,8 @@ def finish_interview(interview_id: str, body: FinishInterviewIn | None = None, u
     )
     if not update.modified_count:
         raise HTTPException(status_code=409, detail="Interview is no longer in progress")
-    return {"interview": ser(_owned_interview(interview_id, user)), "summary": summary}
+    plan = refresh_learning_plan(db, str(user["_id"]))
+    return {"interview": ser(_owned_interview(interview_id, user)), "summary": summary, "roadmap": plan}
 
 
 @router.post("/{interview_id}/cancel")

@@ -1,32 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.deps import current_user
-from app.core.utils import to_oid, utcnow
+from app.core.utils import utcnow
 from app.db.mongo import get_db
 from app.models.schemas import TaskUpdateIn
-from app.services.roadmap import build_tasks
+from app.services.roadmap import refresh_learning_plan
 
 router = APIRouter(prefix="/api/learning-plan", tags=["learning plan"])
 
 
 @router.get("")
 def get_learning_plan(user: dict = Depends(current_user)):
-    db = get_db()
-    uid = str(user["_id"])
-    resumes = list(db.resumes.find({"user_id": uid}).sort("created_at", -1).limit(20))
-    interviews = list(db.interviews.find({"user_id": uid}).sort("created_at", -1).limit(100))
-    existing = db.learning_plans.find_one({"user_id": uid}) or {}
-    prior = {task["id"]: task for task in existing.get("tasks", [])}
-    tasks = build_tasks(resumes, interviews)
-    for task in tasks:
-        saved = prior.get(task["id"])
-        if saved:
-            task["completed"] = bool(saved.get("completed"))
-            task["updated_at"] = saved.get("updated_at")
-    plan = {"user_id": uid, "tasks": tasks, "updated_at": utcnow()}
-    db.learning_plans.replace_one({"user_id": uid}, plan, upsert=True)
-    plan.pop("_id", None)
-    return plan
+    return refresh_learning_plan(get_db(), str(user["_id"]))
 
 
 @router.patch("/tasks/{task_id}")

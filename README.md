@@ -15,6 +15,16 @@ New contributors: start with [START_HERE.md](START_HERE.md), then use [PROJECT_S
 > **Scores are practice feedback, not a measure of employability.** The system never infers honesty,
 > personality or emotion from a face.
 
+## Practice features
+
+- **Company preparation tracks:** TCS, Infosys, Accenture, IBM, Cognizant, Amazon, and Google tracks guide original, role-focused questions using each employer's public career/interview-preparation material. They are broad practice themes, not leaked, guaranteed, or official question lists; actual hiring steps vary by role.
+- **Adaptive roadmap:** after each completed interview, lower-scoring topics and resume/job-description gaps become prioritized tasks. The next interview can focus on the first open high-priority topic, and checkmarks are retained when the plan refreshes.
+- **Answer-quality profile:** each interview reports communication, technical depth, reasoning, problem-solving, and confidence in the written explanation. Confidence measures clarity, evidence, and calibrated uncertainty in the answer; it is not a psychological or video/audio assessment.
+- **Think-aloud coding:** candidates can explain an approach in the Coding Arena and get one AI interviewer follow-up about complexity, edge cases, optimization, or an alternative solution.
+- **XP, achievements, streaks, and rankings:** XP is awarded once per unique accepted problem (Easy 25, Medium 50, Hard 100). Global rank sorts by XP, unique solved count, then first-solve time. Friend duels use one shared server-timed problem, fixed difficulty points, and the earliest accepted solve as tie-break; identical server times are a draw. AI help is disabled during live duels.
+
+Company track references: [TCS NQT](https://www.tcs.com/careers/india/tcs-all-india-nqt-hiring), [Infosys Power Programmer](https://www.infosys.com/careers/power-programmers.html), [Accenture hiring](https://www.accenture.com/us-en/careers/explore-careers/area-of-interest/journey-to-accenture), [IBM application process](https://www.ibm.com/careers/application-process), [Cognizant hiring](https://careers.cognizant.com/india-en/pathways-to-cognizant/how-we-hire/), [Amazon software development preparation](https://www.amazon.jobs/content/en/how-we-hire/interview-prep/software-development-topics), and [Google technical interview tips](https://blog.google/company-news/inside-google/life-at-google/google-engineer-shares-her-technical-interview-tips/).
+
 ## Status: interview preparation plus Coding Arena in source; integration still needs local services
 
 | Area | Status |

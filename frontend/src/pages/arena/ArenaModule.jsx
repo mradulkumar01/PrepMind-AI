@@ -5,6 +5,7 @@ import ProblemWorkspace from "./ProblemWorkspace.jsx";
 import Hackathons from "./Hackathons.jsx";
 import ArenaProgress from "./ArenaProgress.jsx";
 import ArenaAdmin from "./ArenaAdmin.jsx";
+import FriendDuels from "./FriendDuels.jsx";
 
 export default function ArenaModule({ user }) {
   return <Routes>
@@ -13,6 +14,8 @@ export default function ArenaModule({ user }) {
     <Route path="problems/:slug" element={<ProblemWorkspace />} />
     <Route path="hackathons" element={<Hackathons />} />
     <Route path="hackathons/:slug" element={<Hackathons />} />
+    <Route path="friends" element={<FriendDuels />} />
+    <Route path="friends/:duelId" element={<FriendDuels />} />
     <Route path="progress" element={<ArenaProgress />} />
     <Route path="admin" element={<ArenaAdmin />} />
     <Route path="*" element={<Navigate to="/arena" replace />} />

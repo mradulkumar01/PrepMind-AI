@@ -13,6 +13,7 @@ export default function ProblemWorkspace() {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
   const contestId = searchParams.get("contest");
+  const duelId = searchParams.get("duel");
   const [problem, setProblem] = useState(null);
   const [languages, setLanguages] = useState(initialLanguages);
   const [language, setLanguage] = useState("python");
@@ -31,9 +32,16 @@ export default function ProblemWorkspace() {
   const [fontSize, setFontSize] = useState(14);
   const [split, setSplit] = useState(50);
   const [showHints, setShowHints] = useState(false);
+  const [approach, setApproach] = useState("");
+  const [thinkAloudFocus, setThinkAloudFocus] = useState("time complexity");
+  const [thinkAloudAnswer, setThinkAloudAnswer] = useState("");
+  const [duelInfo, setDuelInfo] = useState(null);
+  const [serverOffset, setServerOffset] = useState(0);
+  const [clockNow, setClockNow] = useState(Date.now());
   const editorRef = useRef(null);
   const userDraftKey = `prepmind_arena_${getToken()?.slice(-12) || "guest"}_${slug}_${language}`;
   const sample = problem?.examples?.[0];
+  const duelRemaining = duelInfo?.ends_at ? Math.max(0, Date.parse(duelInfo.ends_at) - (clockNow + serverOffset)) : null;
   const lineNumbers = useMemo(() => Array.from({ length: Math.max(1, code.split("\n").length) }, (_, i) => i + 1), [code]);
 
   const load = () => {
@@ -44,6 +52,20 @@ export default function ProblemWorkspace() {
     }).catch((e) => setError(e.message));
   };
   useEffect(() => { load(); api.arenaLanguages().then(setLanguages).catch(() => {}); }, [slug]);
+  useEffect(() => {
+    if (!duelId) return undefined;
+    let active = true;
+    const refreshDuel = () => api.arenaDuel(duelId).then((info) => {
+      if (active) { setDuelInfo(info); setServerOffset(Date.parse(info.server_time) - Date.now()); }
+    }).catch(() => {});
+    refreshDuel();
+    const interval = setInterval(refreshDuel, 12000);
+    return () => { active = false; clearInterval(interval); };
+  }, [duelId]);
+  useEffect(() => {
+    const interval = setInterval(() => setClockNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
   useEffect(() => {
     if (!problem) return;
     const saved = localStorage.getItem(userDraftKey);
@@ -66,19 +88,26 @@ export default function ProblemWorkspace() {
     if (!code.trim()) return;
     setBusy("submit"); setError(""); setOutput(null); setPanel("results");
     try {
-      const result = await api.arenaSubmit(slug, { code, language, contest_id: contestId || undefined });
+      const result = await api.arenaSubmit(slug, { code, language, contest_id: contestId || undefined, duel_id: duelId || undefined });
       setOutput({ kind: "submit", ...result });
       setHistory((items) => [result, ...items]);
     } catch (e) { setError(e.message); }
     finally { setBusy(""); }
   };
-  const requestHelp = async (question = assistantQuestion) => {
+  const requestHelp = async (question = assistantQuestion, assistantMode = mode) => {
     setAssistantError(""); setAssistantAnswer(""); setBusy("assistant");
     try {
-      const res = await api.arenaAssistant({ problem_slug: slug, question, code, mode, contest_id: contestId || undefined });
+      const res = await api.arenaAssistant({ problem_slug: slug, question, code, mode: assistantMode, contest_id: contestId || undefined, duel_id: duelId || undefined });
       setAssistantAnswer(res.answer);
+      return res.answer;
     } catch (e) { setAssistantError(e.message); }
     finally { setBusy(""); }
+  };
+  const askThinkAloud = async () => {
+    if (!approach.trim()) return;
+    setThinkAloudAnswer("");
+    const followup = await requestHelp(`The candidate is explaining their current solution approach: <approach>${approach.slice(0, 2500)}</approach>. Ask one concise interviewer follow-up focused on ${thinkAloudFocus}. Do not provide the answer or a complete solution.`, "interview");
+    setThinkAloudAnswer(followup || "");
   };
   const changeLanguage = (next) => setLanguage(next);
   const resetCode = () => {
@@ -102,8 +131,8 @@ export default function ProblemWorkspace() {
   if (error && !problem) return <ArenaFrame><ArenaNotice>{error}<Link className="ml-3 underline" to="/arena/problems">Back to problems</Link></ArenaNotice></ArenaFrame>;
   if (!problem) return <ArenaFrame><LoadingState label="Opening problem workspace…" /></ArenaFrame>;
 
-  return <ArenaFrame eyebrow={contestId ? "CONTEST WORKSPACE · SERVER-TIMED" : "CODING WORKSPACE"} title={problem.title} description="Read the prompt, work in your language of choice, and run real code in the configured sandbox." actions={<div className="flex items-center gap-2"><DifficultyPill value={problem.difficulty} /><span className="text-xs text-slate-500">{problem.acceptance_rate == null ? "Acceptance —" : `${problem.acceptance_rate}% acceptance`}</span></div>}>
-    <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400"><Link to={contestId ? "/arena/hackathons" : "/arena/problems"} className="hover:text-white">← {contestId ? "Contest" : "Problem library"}</Link><span>Draft autosaves in this browser · Ctrl/⌘ + Enter runs code</span></div>
+  return <ArenaFrame eyebrow={duelId ? "FRIEND DUEL · SERVER TIMED" : contestId ? "CONTEST WORKSPACE · SERVER-TIMED" : "CODING WORKSPACE"} title={problem.title} description="Think through an approach, write code, run tests, and review complexity and edge cases in the configured sandbox." actions={<div className="flex items-center gap-2"><DifficultyPill value={problem.difficulty} /><span className="text-xs text-slate-500">{problem.acceptance_rate == null ? "Acceptance —" : `${problem.acceptance_rate}% acceptance`}</span></div>}>
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400"><Link to={duelId ? `/arena/friends/${duelId}` : contestId ? "/arena/hackathons" : "/arena/problems"} className="hover:text-white">← {duelId ? "Friend duel" : contestId ? "Contest" : "Problem library"}</Link><span className="flex items-center gap-3">{duelId && duelInfo?.status === "live" && duelRemaining != null && <b className="rounded-full border border-rose-300/15 bg-rose-300/[.06] px-3 py-1.5 font-mono text-rose-100">{String(Math.floor(duelRemaining / 60000)).padStart(2, "0")}:{String(Math.floor((duelRemaining % 60000) / 1000)).padStart(2, "0")} remaining</b>}<span>Draft autosaves in this browser · Ctrl/⌘ + Enter runs code</span></span></div>
     <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-white/[.07] bg-white/[.025] p-2.5">
       <span className="mr-1 text-xs font-semibold text-slate-400">Resize split</span><input aria-label="Problem and editor split" type="range" min="35" max="65" value={split} onChange={(e) => setSplit(Number(e.target.value))} className="w-44 accent-violet-400" />
       <span className="ml-auto hidden text-xs text-slate-500 sm:block">{problem.prerequisites?.length ? `Prerequisites: ${problem.prerequisites.join(" · ")}` : "No prerequisite list"}</span>
@@ -119,6 +148,16 @@ export default function ProblemWorkspace() {
           </div>}
           {panel === "hints" && <div className="space-y-3 pt-4"><p className="text-xs text-slate-500">Hints are progressively revealed. Ask the assistant for coaching using the selected mode.</p>{problem.hints?.map((hint, i) => <details key={i} className="group rounded-xl border border-white/[.07] bg-black/15 p-3"><summary className="cursor-pointer text-sm font-medium text-slate-300">Hint {i + 1}</summary><p className="mt-3 text-sm leading-relaxed text-slate-400">{hint}</p></details>)}<button type="button" className="text-xs text-violet-200 underline" onClick={() => requestHelp("Give me one progressive hint.")}>Ask PrepMind AI for a hint</button></div>}
           {panel === "submissions" && <div className="space-y-2 pt-4">{history.length ? history.map((s, i) => <div key={s.id || i} className="flex items-center justify-between gap-3 rounded-lg bg-white/[.025] p-3 text-xs"><span className="text-slate-400">{s.language} · {s.created_at ? new Date(s.created_at).toLocaleString() : "just now"}</span><span className="flex items-center gap-3"><span className={s.status === "Accepted" ? "font-bold text-emerald-300" : "font-bold text-rose-300"}>{s.status}</span>{s.id && <DeleteConfirmAction className="rounded-md p-1 text-slate-500 transition hover:bg-rose-400/10 hover:text-rose-200" title="Remove this submission from history?" description="It will disappear from your personal submission history. Verified contest scores and coding progress are preserved." confirmLabel="Remove from history" triggerProps={{ "aria-label": `Remove ${s.status} ${s.language} submission from history`, title: "Remove from history" }} onDelete={async () => { await api.deleteArenaSubmission(s.id); setHistory((items) => items.filter((item) => item.id !== s.id)); }}><span aria-hidden="true">×</span></DeleteConfirmAction>}</span></div>) : <p className="py-8 text-center text-sm text-slate-500">No submissions for this problem yet.</p>}</div>}
+        </ArenaCard>
+        <ArenaCard>
+          <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-cyan-300">Think-aloud coding</p><h3 className="mt-1 text-sm font-bold">Explain the approach you are writing</h3></div><span className="rounded-full bg-violet-300/10 px-2.5 py-1 text-[10px] text-violet-100">Interview practice</span></div>
+          <p className="mt-2 text-xs leading-relaxed text-slate-500">Before submitting, describe your plan. The AI interviewer asks one follow-up about complexity, edge cases, optimization, or an alternative solution.</p>
+          <textarea className="arena-input mt-3 min-h-24 resize-y text-sm" maxLength={2500} value={approach} onChange={(e) => setApproach(e.target.value)} placeholder="Example: I will scan once and store values in a hash map. That should be O(n) time and O(n) space…" />
+          <div className="mt-2 flex flex-wrap gap-2">{["time complexity", "edge cases", "optimization", "an alternative solution"].map((focus) => <button key={focus} type="button" onClick={() => setThinkAloudFocus(focus)} className={`rounded-full px-2.5 py-1.5 text-[10px] font-semibold ${thinkAloudFocus === focus ? "bg-violet-300/15 text-violet-100" : "bg-white/[.04] text-slate-500 hover:text-slate-200"}`}>{focus}</button>)}</div>
+          <button className="arena-button arena-button-subtle mt-3" disabled={!approach.trim() || busy === "assistant" || Boolean(contestId) || Boolean(duelId)} onClick={askThinkAloud}>{busy === "assistant" ? "Interviewer is thinking…" : "Explain & get a follow-up"}</button>
+          {(contestId || duelId) && <p className="mt-2 text-[10px] text-amber-200/75">AI coaching is disabled during live contests and friend duels to keep the competition fair.</p>}
+          {thinkAloudAnswer && <div className="mt-3 rounded-xl border border-violet-300/15 bg-violet-300/[.05] p-3 text-sm leading-relaxed text-violet-50"><span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-violet-200">Interviewer follow-up</span>{thinkAloudAnswer}</div>}
+          {assistantError && <p role="alert" className="mt-2 text-xs text-rose-200">{assistantError}</p>}
         </ArenaCard>
         <ArenaCard>
           <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-violet-300">PrepMind assistant</p><h3 className="mt-1 text-sm font-bold">Coach, don’t copy</h3></div><select aria-label="Assistant mode" className="arena-input w-auto" value={mode} onChange={(e) => setMode(e.target.value)}><option value="learn">Learn mode</option><option value="practice">Practice mode</option><option value="interview">Interview mode</option><option value="contest">Contest mode</option></select></div>
@@ -147,7 +186,7 @@ export default function ProblemWorkspace() {
           <div className="flex items-center justify-between gap-3"><div><p className="text-[10px] font-bold uppercase tracking-[.2em] text-slate-500">Execution results</p><h3 className={`mt-1 text-lg font-bold ${output?.verdict === "Accepted" ? "text-emerald-300" : output ? "text-rose-200" : "text-white"}`}>{busy === "run" ? "Running in sandbox…" : busy === "submit" ? "Judging hidden tests…" : output?.kind === "run" ? `${output.verdict}${output.sample_run ? " · sample/custom run" : " · custom run"}` : output?.verdict || "Ready"}</h3></div>{output?.kind === "submit" && <span className="rounded-full bg-white/[.05] px-3 py-1.5 text-xs text-slate-300">{output.passed_tests}/{output.total_tests} passed</span>}</div>
           {error && <ArenaNotice>{error}</ArenaNotice>}
           {output?.kind === "run" && <div className="mt-3 grid gap-3 sm:grid-cols-2"><div className="rounded-xl bg-black/20 p-3"><p className="mb-2 text-[10px] font-bold uppercase text-slate-500">Standard output</p><pre className="min-h-10 whitespace-pre-wrap break-words font-mono text-xs text-cyan-100">{output.stdout || "(empty)"}</pre></div><div className="rounded-xl bg-black/20 p-3"><p className="mb-2 text-[10px] font-bold uppercase text-slate-500">Compiler / runtime output</p><pre className="min-h-10 whitespace-pre-wrap break-words font-mono text-xs text-rose-100">{output.compile_output || output.stderr || "(none)"}</pre></div><p className="text-[10px] text-slate-500">A sample run only checks the supplied input; it does not count as an accepted submission.</p></div>}
-          {output?.kind === "submit" && <><p className="mt-3 text-xs text-slate-400">{output.execution_time}s total execution · {output.memory_kb || "—"} KB peak memory · {new Date(output.created_at).toLocaleString()}</p>{output.failures?.map((f, i) => <div key={i} className="mt-3 rounded-xl border border-rose-300/10 bg-rose-300/[.04] p-3"><p className="text-xs font-bold text-rose-200">Test {f.case} {f.hidden ? "· hidden case" : "· visible case"}</p>{!f.hidden && <pre className="mt-2 whitespace-pre-wrap text-xs leading-5 text-slate-300">Input: {f.input}{"\n"}Expected: {f.expected}{"\n"}Actual: {f.actual || "(empty)"}{(f.compile_output || f.stderr) ? `\n${f.compile_output || f.stderr}` : ""}</pre>}</div>)}</>}
+          {output?.kind === "submit" && <><p className="mt-3 text-xs text-slate-400">{output.execution_time}s total execution · {output.memory_kb || "—"} KB peak memory · {new Date(output.created_at).toLocaleString()}</p>{output.xp_awarded && <p className="mt-2 inline-flex rounded-full border border-amber-200/15 bg-amber-200/[.06] px-3 py-1.5 text-xs font-bold text-amber-100">+{output.xp_points} XP · first accepted solve</p>}{output.duel_points_awarded && <p className="ml-2 mt-2 inline-flex rounded-full border border-violet-200/15 bg-violet-200/[.06] px-3 py-1.5 text-xs font-bold text-violet-100">+{output.duel_points} duel points</p>}{output.failures?.map((f, i) => <div key={i} className="mt-3 rounded-xl border border-rose-300/10 bg-rose-300/[.04] p-3"><p className="text-xs font-bold text-rose-200">Test {f.case} {f.hidden ? "· hidden case" : "· visible case"}</p>{!f.hidden && <pre className="mt-2 whitespace-pre-wrap text-xs leading-5 text-slate-300">Input: {f.input}{"\n"}Expected: {f.expected}{"\n"}Actual: {f.actual || "(empty)"}{(f.compile_output || f.stderr) ? `\n${f.compile_output || f.stderr}` : ""}</pre>}</div>)}</>}
         </ArenaCard>}
       </div>
     </div>

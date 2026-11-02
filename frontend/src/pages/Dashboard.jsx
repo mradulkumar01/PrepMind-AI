@@ -17,13 +17,14 @@ export default function Dashboard({ user, onReady }) {
   const [resumes, setResumes] = useState([]);
   const [history, setHistory] = useState([]);
   const [plan, setPlan] = useState({ tasks: [] });
+  const [companyTracks, setCompanyTracks] = useState([{ id: "general", name: "General software engineering", summary: "Role- and resume-led practice." }]);
   const [roadmapBusy, setRoadmapBusy] = useState("");
   const [file, setFile] = useState(null);
   const [inputKey, setInputKey] = useState(0);
   const [drag, setDrag] = useState(false);
   const [jd, setJd] = useState("");
   const [showJd, setShowJd] = useState(false);
-  const [cfg, setCfg] = useState({ resume_id: "", interview_type: "mixed", num_questions: 5, target_role: "Software engineering", topics: "", difficulty: "medium" });
+  const [cfg, setCfg] = useState({ resume_id: "", interview_type: "mixed", num_questions: 5, target_role: "Software engineering", topics: "", difficulty: "medium", company_track: "general" });
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [busy, setBusy] = useState("");
   const [loading, setLoading] = useState(true);
@@ -39,6 +40,7 @@ export default function Dashboard({ user, onReady }) {
     finally { setLoading(false); if (initial) onReady?.(); }
   };
   useEffect(() => { load(true); }, []);
+  useEffect(() => { api.companyTracks().then(setCompanyTracks).catch(() => {}); }, []);
 
   const pick = (f) => {
     if (!f) return;
@@ -200,6 +202,12 @@ export default function Dashboard({ user, onReady }) {
                     <input id="topics" className="input mt-2" maxLength={800} value={cfg.topics} onChange={(e) => setCfg({ ...cfg, topics: e.target.value })} placeholder="e.g. Python, APIs, system design" />
                   </label>
                 </div>
+                <label className="mb-4 block text-sm font-medium" htmlFor="company-track">Company preparation track
+                  <select id="company-track" className="input mt-2" value={cfg.company_track} onChange={(e) => setCfg({ ...cfg, company_track: e.target.value })}>
+                    {companyTracks.map((track) => <option key={track.id} value={track.id}>{track.name}</option>)}
+                  </select>
+                  <span className="mt-1 block text-xs font-normal text-ink/55">{companyTracks.find((track) => track.id === cfg.company_track)?.summary || "Role-focused question practice."} Themes summarize public guidance; actual roles and interview steps vary. {companyTracks.find((track) => track.id === cfg.company_track)?.source_url ? <a className="text-brand underline" href={companyTracks.find((track) => track.id === cfg.company_track)?.source_url} target="_blank" rel="noreferrer">Official preparation source</a> : <span>Original general practice track.</span>}</span>
+                </label>
                 {resumes.length > 1 && (
                   <select className="input mb-4" value={cfg.resume_id} onChange={(e) => setCfg({ ...cfg, resume_id: e.target.value })} aria-label="Resume to use">
                     {resumes.map((r) => <option key={r.id} value={r.id}>{r.filename}</option>)}

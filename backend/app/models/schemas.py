@@ -5,6 +5,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 
 InterviewType = Literal["technical", "hr", "project", "mixed"]
 Difficulty = Literal["easy", "medium", "hard"]
+CompanyTrack = Literal["general", "tcs", "infosys", "accenture", "ibm", "cognizant", "amazon", "google"]
 
 
 class RegisterIn(BaseModel):
@@ -44,6 +45,7 @@ class StartInterviewIn(BaseModel):
     target_role: str = Field(default="Software engineering", min_length=1, max_length=120)
     topics: list[str] = Field(default_factory=list, max_length=10)
     difficulty: Difficulty = "medium"
+    company_track: CompanyTrack = "general"
 
     @field_validator("target_role")
     @classmethod
@@ -82,6 +84,7 @@ class ArenaSubmitIn(BaseModel):
     code: str = Field(min_length=1, max_length=30000)
     language: Literal["python", "javascript", "java", "cpp", "c", "sql"]
     contest_id: str | None = None
+    duel_id: str | None = None
 
 
 class ArenaAssistantIn(BaseModel):
@@ -90,6 +93,7 @@ class ArenaAssistantIn(BaseModel):
     code: str = Field(default="", max_length=20000)
     mode: Literal["learn", "practice", "interview", "contest"] = "practice"
     contest_id: str | None = None
+    duel_id: str | None = None
 
 
 class ArenaProblemIn(BaseModel):
@@ -125,6 +129,15 @@ class ArenaTeamIn(BaseModel):
 
 
 class ArenaTeamJoinIn(BaseModel):
+    invite_code: str = Field(min_length=6, max_length=32)
+
+
+class ArenaDuelCreateIn(BaseModel):
+    problem_slug: str = Field(min_length=1, max_length=100)
+    duration_minutes: int = Field(default=30, ge=10, le=120)
+
+
+class ArenaDuelJoinIn(BaseModel):
     invite_code: str = Field(min_length=6, max_length=32)
 
 
