@@ -6,6 +6,7 @@
   It is NOT an AI judgement and results are tagged "mock-heuristic".
 """
 import re
+import time
 
 
 class LLMError(RuntimeError):
@@ -32,7 +33,7 @@ class LLMClient:
 
 
 class OpenAICompatibleClient(LLMClient):
-    def __init__(self, base_url: str, model: str, api_key: str, timeout: float = 120.0):
+    def __init__(self, base_url: str, model: str, api_key: str, timeout: float = 60.0):
         self.base_url, self.model, self.api_key, self.timeout = base_url.rstrip("/"), model, api_key, timeout
         self.name = model
 
@@ -48,23 +49,33 @@ class OpenAICompatibleClient(LLMClient):
         # OpenAI-compatible providers still use the app's lower temperature.
         if not self.model.lower().startswith("gemini-"):
             payload["temperature"] = 0.4
+        elif self.model.lower().startswith("gemini-3"):
+            # Gemini 3 models support this OpenAI-compatible parameter. A low
+            # reasoning level keeps interview prompts responsive for this task.
+            payload["reasoning_effort"] = "low"
 
-        try:
-            r = httpx.post(
-                f"{self.base_url}/chat/completions",
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                json=payload,
-                timeout=self.timeout,
-            )
-            r.raise_for_status()
-            return r.json()["choices"][0]["message"]["content"]
-        except httpx.HTTPStatusError as exc:
-            raise LLMUnavailable(
-                f"LLM provider returned HTTP {exc.response.status_code}",
-                status_code=exc.response.status_code,
-            ) from exc
-        except (httpx.HTTPError, KeyError, IndexError, ValueError) as exc:
-            raise LLMUnavailable(f"LLM request failed: {exc.__class__.__name__}") from exc
+        url = f"{self.base_url}/chat/completions"
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+        for attempt in range(2):
+            try:
+                r = httpx.post(url, headers=headers, json=payload, timeout=self.timeout)
+                r.raise_for_status()
+                return r.json()["choices"][0]["message"]["content"]
+            except httpx.HTTPStatusError as exc:
+                status = exc.response.status_code
+                if status in (502, 503, 504) and attempt == 0:
+                    time.sleep(1)
+                    continue
+                raise LLMUnavailable(
+                    f"LLM provider returned HTTP {status}", status_code=status,
+                ) from exc
+            except (httpx.TimeoutException, httpx.NetworkError) as exc:
+                if attempt == 0:
+                    time.sleep(1)
+                    continue
+                raise LLMUnavailable(f"LLM request failed: {exc.__class__.__name__}") from exc
+            except (httpx.HTTPError, KeyError, IndexError, ValueError) as exc:
+                raise LLMUnavailable(f"LLM request failed: {exc.__class__.__name__}") from exc
 
 
 _MOCK_QUESTIONS = {
