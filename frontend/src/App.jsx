@@ -47,6 +47,16 @@ export default function App() {
 
   return (
     <>
+      {user && (
+        <div className="app-scene" aria-hidden="true">
+          <div className="app-scene-glow app-scene-glow-one" />
+          <div className="app-scene-glow app-scene-glow-two" />
+          <div className="app-scene-glow app-scene-glow-three" />
+          <div className="app-scene-orbit app-scene-orbit-one"><i /></div>
+          <div className="app-scene-orbit app-scene-orbit-two"><i /></div>
+          <div className="app-scene-grid" />
+        </div>
+      )}
       <header className={`sticky top-0 z-20 border-b border-brand/15 bg-white/80 shadow-[0_6px_24px_-18px_rgba(119,35,78,.45)] backdrop-blur-xl ${user ? "" : "auth-site-header"}`}>
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <Link to="/" className="text-lg font-bold text-brand">
@@ -64,7 +74,7 @@ export default function App() {
           )}
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className={`mx-auto max-w-6xl px-4 py-8 ${user ? "app-auth-main" : ""}`}>
         <Routes>
           <Route path="/login" element={<Auth onAuth={onAuth} />} />
           <Route path="/" element={guard(<Dashboard user={user} onReady={finishLoginLoading} />)} />

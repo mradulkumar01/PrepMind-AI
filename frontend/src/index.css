@@ -351,3 +351,37 @@
   .auth-background { background: radial-gradient(ellipse at 50% 30%,#f6dbea,#e6cae8 52%,#d8c5e7); }
   .auth-ambient-one,.auth-ambient-two,.auth-live i,.auth-wave i,.auth-mark span { animation: none !important; }
 }
+
+/* Soft 3D ambience shared by all signed-in pages */
+.app-auth-main { position: relative; z-index: 1; }
+.app-scene { position: fixed; z-index: 0; inset: 0; overflow: hidden; pointer-events: none; perspective: 1100px; isolation: isolate; }
+.app-scene::before { position: absolute; inset: 0; content: ""; background: radial-gradient(ellipse at 50% 35%,rgba(255,255,255,.22),transparent 58%),linear-gradient(180deg,rgba(255,251,254,.04),rgba(246,230,244,.2)); }
+.app-scene-glow { position: absolute; border-radius: 50%; filter: blur(2px); transform-style: preserve-3d; will-change: transform; }
+.app-scene-glow-one { top: -17rem; left: -10rem; width: 36rem; height: 36rem; background: radial-gradient(circle at 42% 43%,rgba(231,107,174,.23),rgba(231,107,174,.08) 47%,transparent 72%); animation: appGlowDriftOne 18s ease-in-out infinite; }
+.app-scene-glow-two { top: 14%; right: -19rem; width: 43rem; height: 43rem; background: radial-gradient(circle at 38% 45%,rgba(171,127,244,.19),rgba(171,127,244,.055) 48%,transparent 72%); animation: appGlowDriftTwo 22s ease-in-out infinite; }
+.app-scene-glow-three { bottom: -29rem; left: 28%; width: 48rem; height: 48rem; background: radial-gradient(circle at 50% 35%,rgba(255,186,218,.22),rgba(255,186,218,.06) 51%,transparent 72%); animation: appGlowDriftThree 24s ease-in-out infinite; }
+.app-scene-orbit { position: absolute; display: grid; width: clamp(11rem,25vw,22rem); aspect-ratio: 1; place-items: center; border: 1px solid rgba(255,255,255,.46); border-radius: 50%; background: radial-gradient(circle at 33% 26%,rgba(255,255,255,.5),rgba(225,190,239,.12) 35%,rgba(201,155,225,.035) 67%,transparent 70%); box-shadow: inset -18px -24px 50px rgba(141,86,181,.075),inset 12px 12px 38px rgba(255,255,255,.32),0 24px 70px -52px rgba(122,69,147,.4); transform-style: preserve-3d; will-change: transform; }
+.app-scene-orbit::before,.app-scene-orbit::after { position: absolute; inset: -12%; border: 1px solid rgba(255,255,255,.25); border-radius: 50%; content: ""; transform: rotateX(67deg) rotateZ(-22deg); }
+.app-scene-orbit::after { inset: 7%; border-color: rgba(205,134,192,.2); transform: rotateY(68deg) rotateZ(26deg); }
+.app-scene-orbit i { position: absolute; top: 17%; right: 22%; width: .7rem; height: .7rem; border: 1px solid rgba(255,255,255,.8); border-radius: 50%; background: #e97db8; box-shadow: 0 0 22px 7px rgba(233,125,184,.32); transform: translateZ(38px); }
+.app-scene-orbit-one { top: 17%; right: -8rem; animation: appOrbFloatOne 14s ease-in-out infinite; }
+.app-scene-orbit-two { bottom: -9rem; left: -6rem; width: clamp(9rem,20vw,17rem); opacity: .72; animation: appOrbFloatTwo 17s ease-in-out infinite; }
+.app-scene-grid { position: absolute; right: -10%; bottom: -39vh; left: -10%; height: 72vh; opacity: .25; background-image: linear-gradient(rgba(161,114,190,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(161,114,190,.12) 1px,transparent 1px); background-size: 56px 56px; transform: perspective(520px) rotateX(63deg); transform-origin: center top; mask-image: linear-gradient(transparent 1%,rgba(0,0,0,.8) 34%,transparent 92%); animation: appGridDrift 20s linear infinite; }
+@keyframes appGlowDriftOne { 0%,100% { transform: translate3d(0,0,-80px) scale(1); } 50% { transform: translate3d(3rem,2rem,-30px) scale(1.08); } }
+@keyframes appGlowDriftTwo { 0%,100% { transform: translate3d(0,0,-90px) scale(1); } 50% { transform: translate3d(-3rem,-2rem,-40px) scale(1.06); } }
+@keyframes appGlowDriftThree { 0%,100% { transform: translate3d(0,0,-100px) scale(1); } 50% { transform: translate3d(0,-3rem,-50px) scale(1.1); } }
+@keyframes appOrbFloatOne { 0%,100% { transform: translate3d(0,0,-25px) rotateX(-12deg) rotateY(18deg); } 50% { transform: translate3d(-2rem,1.5rem,35px) rotateX(8deg) rotateY(-8deg); } }
+@keyframes appOrbFloatTwo { 0%,100% { transform: translate3d(0,0,-55px) rotateX(10deg) rotateY(-16deg); } 50% { transform: translate3d(1.5rem,-2rem,10px) rotateX(-8deg) rotateY(12deg); } }
+@keyframes appGridDrift { to { background-position: 0 56px,56px 0; } }
+@media (max-width: 640px) {
+  .app-scene-glow-one { top: -19rem; left: -19rem; }
+  .app-scene-glow-two { right: -26rem; }
+  .app-scene-orbit-one { top: 25%; right: -10rem; }
+  .app-scene-orbit-two { bottom: -9rem; left: -7rem; }
+  .app-scene-grid { bottom: -45vh; opacity: .17; background-size: 44px 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-scene-glow,.app-scene-orbit,.app-scene-grid { animation: none !important; }
+  .app-scene-orbit-one { transform: translateZ(-25px) rotateX(-8deg) rotateY(12deg); }
+  .app-scene-orbit-two { transform: translateZ(-55px) rotateX(8deg) rotateY(-10deg); }
+}
