@@ -110,10 +110,23 @@ export default function Dashboard({ user, onReady }) {
   const jumpToInterview = () => document.getElementById("interview-setup")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
 
   return (
-    <div className="space-y-6">
+    <div className="dashboard-page space-y-6">
+      <div className="dashboard-page-scene" aria-hidden="true">
+        <span className="dashboard-page-orb dashboard-page-orb-one" />
+        <span className="dashboard-page-orb dashboard-page-orb-two" />
+        <span className="dashboard-page-grid" />
+      </div>
       <section className="home-hero home-hero-enter relative isolate overflow-hidden rounded-[28px] border border-brand/20 bg-white/80 p-5 shadow-[0_22px_70px_-44px_rgba(119,35,78,.5)] backdrop-blur-xl sm:p-8">
-        <span className="home-hero-glow home-hero-glow-one" aria-hidden="true"/><span className="home-hero-glow home-hero-glow-two" aria-hidden="true"/>
-        <div className="relative grid items-center gap-7 lg:grid-cols-[1fr_auto]">
+        <div className="home-hero-scene" aria-hidden="true">
+          <span className="home-hero-glow home-hero-glow-one" />
+          <span className="home-hero-glow home-hero-glow-two" />
+          <span className="home-hero-orb home-hero-orb-one" />
+          <span className="home-hero-orb home-hero-orb-two" />
+          <span className="home-hero-ring home-hero-ring-one" />
+          <span className="home-hero-ring home-hero-ring-two" />
+          <span className="home-hero-grid" />
+        </div>
+        <div className="relative z-10 grid items-center gap-7 lg:grid-cols-[1fr_auto]">
           <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-brand/15 bg-brand-light/70 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.2em] text-brand-dark"><span className="home-live-dot"/>Your personal preparation space</p>
             <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-5xl">{greeting}, {first}<span className="text-brand">.</span></h1>
@@ -127,7 +140,7 @@ export default function Dashboard({ user, onReady }) {
             <p className="mt-3 text-xs text-ink/55">{loading ? "Syncing your saved progress" : resumes.length ? `${openTasks} personal practice ${openTasks === 1 ? "step" : "steps"} ready` : "Add your resume to unlock a tailored interview"}</p>
           </div>
         </div>
-        <div className="relative mt-7 grid gap-2 border-t border-brand/10 pt-4 text-xs sm:grid-cols-3"><div className="flex items-center gap-2 text-ink/65"><span className="home-step-number">01</span> Add your resume</div><div className="flex items-center gap-2 text-ink/65"><span className="home-step-number">02</span> Practise with adaptive questions</div><div className="flex items-center gap-2 text-ink/65"><span className="home-step-number">03</span> Turn feedback into progress</div></div>
+        <div className="relative z-10 mt-7 grid gap-2 border-t border-brand/10 pt-4 text-xs sm:grid-cols-3"><div className="flex items-center gap-2 text-ink/65"><span className="home-step-number">01</span> Add your resume</div><div className="flex items-center gap-2 text-ink/65"><span className="home-step-number">02</span> Practise with adaptive questions</div><div className="flex items-center gap-2 text-ink/65"><span className="home-step-number">03</span> Turn feedback into progress</div></div>
       </section>
 
       {msg.text && (
