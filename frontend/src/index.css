@@ -389,12 +389,12 @@
 /* Main dashboard gets its own more visible 3D treatment */
 .dashboard-page { position: relative; isolation: isolate; }
 .dashboard-page > :not(.dashboard-page-scene) { position: relative; z-index: 1; }
-.dashboard-page-scene { position: fixed; z-index: -1; inset: 4.1rem 0 0; overflow: hidden; pointer-events: none; perspective: 1000px; }
+.dashboard-page-scene { position: fixed; z-index: 0; inset: 4.1rem 0 0; overflow: hidden; pointer-events: none; perspective: 1000px; }
 .dashboard-page-orb { position: absolute; display: block; border: 1px solid rgba(255,255,255,.54); border-radius: 50%; background: radial-gradient(circle at 34% 26%,rgba(255,255,255,.62),rgba(230,181,225,.19) 34%,rgba(174,128,224,.075) 66%,transparent 70%); box-shadow: inset -18px -20px 46px rgba(151,84,166,.08),inset 12px 12px 32px rgba(255,255,255,.35),0 30px 80px -55px rgba(126,76,154,.45); transform-style: preserve-3d; animation: dashboardOrbDrift 16s ease-in-out infinite; }
 .dashboard-page-orb-one { top: 12%; right: -8rem; width: clamp(17rem,32vw,30rem); aspect-ratio: 1; }
 .dashboard-page-orb-two { bottom: -17rem; left: -8rem; width: clamp(18rem,35vw,32rem); aspect-ratio: 1; opacity: .75; animation-delay: -8s; animation-direction: reverse; }
 .dashboard-page-grid { position: absolute; right: -10%; bottom: -43vh; left: -10%; height: 70vh; opacity: .24; background-image: linear-gradient(rgba(153,105,183,.13) 1px,transparent 1px),linear-gradient(90deg,rgba(153,105,183,.13) 1px,transparent 1px); background-size: 54px 54px; transform: perspective(540px) rotateX(64deg); transform-origin: center top; mask-image: linear-gradient(transparent,rgba(0,0,0,.75) 35%,transparent 92%); animation: appGridDrift 22s linear infinite; }
-.home-hero { isolation: isolate; transform-style: preserve-3d; background: linear-gradient(112deg,rgba(255,255,255,.77),rgba(255,247,252,.68) 54%,rgba(255,255,255,.74)); }
+.home-hero { isolation: isolate; transform-style: preserve-3d; background: linear-gradient(112deg,rgba(255,255,255,.72),rgba(255,247,252,.61) 54%,rgba(255,255,255,.68)); }
 .home-hero-scene { position: absolute; z-index: 0; inset: 0; overflow: hidden; pointer-events: none; perspective: 900px; }
 .home-hero-glow { z-index: 0; filter: blur(3px); }
 .home-hero-glow-one { top: -17rem; right: 14%; width: 31rem; height: 31rem; background: radial-gradient(circle at 40% 38%,rgba(231,99,170,.3),rgba(221,120,185,.13) 45%,transparent 72%); transform: translateZ(-35px); }
@@ -424,4 +424,23 @@
   .dashboard-page-orb,.dashboard-page-grid,.home-hero-orb,.home-hero-ring-one,.home-hero-ring-two,.home-hero-grid { animation: none !important; }
   .dashboard-page-orb-one,.dashboard-page-orb-two,.home-hero-orb-one,.home-hero-orb-two { transform: none; }
   .home-hero { transform: none; }
+}
+.prep-workspace { position: relative; isolation: isolate; overflow: hidden; background: linear-gradient(145deg,rgba(255,255,255,.76),rgba(255,249,253,.7)); }
+.prep-workspace > :not(.prep-space-scene) { position: relative; z-index: 1; }
+.prep-space-scene { position: absolute; z-index: 0; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; perspective: 900px; }
+.prep-space-light { position: absolute; display: block; border-radius: 50%; filter: blur(2px); }
+.prep-space-light-one { top: -17rem; right: 15%; width: 34rem; height: 34rem; background: radial-gradient(circle at 40% 38%,rgba(226,91,164,.27),rgba(223,133,187,.11) 45%,transparent 72%); transform: translateZ(-45px); animation: appGlowDriftOne 18s ease-in-out infinite; }
+.prep-space-light-two { right: -16rem; bottom: -25rem; width: 43rem; height: 43rem; background: radial-gradient(circle at 38% 40%,rgba(157,117,226,.2),rgba(210,167,229,.08) 49%,transparent 73%); transform: translateZ(10px); animation: appGlowDriftTwo 20s ease-in-out infinite; }
+.prep-space-orbit { position: absolute; display: block; border: 1px solid rgba(255,255,255,.67); border-radius: 50%; background: radial-gradient(circle at 32% 25%,rgba(255,255,255,.73),rgba(229,186,225,.2) 37%,rgba(178,136,224,.06) 68%,transparent 71%); box-shadow: inset -16px -20px 42px rgba(147,79,165,.09),inset 10px 10px 28px rgba(255,255,255,.35),0 25px 60px -45px rgba(122,69,147,.4); transform-style: preserve-3d; }
+.prep-space-orbit::before,.prep-space-orbit::after { position: absolute; inset: -15%; border: 1px solid rgba(196,134,191,.2); border-radius: 50%; content: ""; transform: rotateX(68deg) rotateZ(-22deg); }
+.prep-space-orbit::after { inset: 8%; border-color: rgba(255,255,255,.5); transform: rotateY(66deg) rotateZ(18deg); }
+.prep-space-orbit-one { top: 10%; right: 4%; width: clamp(12rem,20vw,19rem); aspect-ratio: 1; animation: homeHeroOrbOne 15s ease-in-out infinite; }
+.prep-space-orbit-two { bottom: -11rem; left: 28%; width: clamp(13rem,22vw,21rem); aspect-ratio: 1; opacity: .63; animation: homeHeroOrbTwo 18s ease-in-out infinite; }
+.prep-subcard { background: linear-gradient(145deg,rgba(255,255,255,.83),rgba(255,249,253,.72)); backdrop-filter: blur(10px); }
+@media (max-width: 640px) {
+  .prep-space-orbit-one { top: 12%; right: -8rem; }
+  .prep-space-orbit-two { bottom: -10rem; left: -4rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .prep-space-light,.prep-space-orbit { animation: none !important; }
 }

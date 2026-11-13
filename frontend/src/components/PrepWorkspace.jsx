@@ -171,6 +171,12 @@ export default function PrepWorkspace() {
 
   return (
     <section className="prep-workspace card" aria-labelledby="prep-space-title">
+      <div className="prep-space-scene" aria-hidden="true">
+        <span className="prep-space-light prep-space-light-one" />
+        <span className="prep-space-light prep-space-light-two" />
+        <span className="prep-space-orbit prep-space-orbit-one" />
+        <span className="prep-space-orbit prep-space-orbit-two" />
+      </div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><p className="text-xs font-bold uppercase tracking-[.18em] text-brand">Make it yours</p><h2 id="prep-space-title" className="mt-1 text-2xl font-bold">Prep workspace</h2><p className="mt-1 max-w-2xl text-sm text-ink/60">Keep a focused checklist and capture useful thoughts before or after a practice session.</p></div>
         <span className={`prep-save-status ${saveState === "error" ? "prep-save-error" : ""}`} role="status">{saveState === "loading" ? "Loading your space…" : saveState === "saving" ? <><Spinner /> Saving</> : saveState === "error" ? "Save failed" : "✓ Saved"}</span>
