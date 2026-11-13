@@ -331,3 +331,23 @@
   .auth-visual:hover,.auth-form-card:hover { transform: none !important; }
   .auth-floating-card { animation: none !important; }
 }
+
+/* Full-page abstract motion layer for the login route */
+.auth-site-header { border-color: rgba(255,255,255,.36); background: rgba(255,250,253,.76); box-shadow: 0 6px 24px -18px rgba(40,18,42,.5); }
+.auth-page { z-index: 0; overflow: visible; }
+.auth-background { position: fixed; z-index: -1; inset: 0; overflow: hidden; background: radial-gradient(ellipse at 50% 40%,#9e5d9d,#36203f 70%,#23172d); }
+.auth-background-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .72; filter: saturate(.84) contrast(1.06); }
+.auth-background-shade { position: absolute; inset: 0; background: linear-gradient(120deg,rgba(255,245,251,.38),rgba(226,195,231,.23) 46%,rgba(44,22,49,.42)),linear-gradient(180deg,rgba(255,251,253,.24),rgba(40,19,46,.3)); }
+.auth-background-grain { position: absolute; inset: 0; pointer-events: none; opacity: .12; background-image: radial-gradient(rgba(255,255,255,.5) .55px,transparent .8px); background-size: 5px 5px; mask-image: linear-gradient(transparent,black 20%,black 80%,transparent); }
+.auth-background-toggle { position: absolute; z-index: 3; top: .65rem; right: .5rem; border-color: rgba(255,255,255,.62); background: rgba(48,24,51,.55); box-shadow: 0 8px 26px -14px rgba(31,13,36,.6); }
+.auth-background-toggle:hover { background: rgba(48,24,51,.78); }
+.auth-visual { border-color: rgba(255,255,255,.35); background: linear-gradient(155deg,rgba(45,23,51,.61),rgba(39,23,47,.45) 58%,rgba(68,29,59,.63)); box-shadow: 0 35px 90px -44px rgba(31,13,36,.65),0 1px 0 rgba(255,255,255,.22) inset; backdrop-filter: blur(2px); }
+.auth-visual:hover { box-shadow: 0 42px 100px -44px rgba(31,13,36,.76),0 1px 0 rgba(255,255,255,.28) inset; }
+.auth-visual-top { right: auto; }
+.auth-visual-copy { text-shadow: 0 4px 22px rgba(18,8,24,.2); }
+.auth-form-card { background: linear-gradient(145deg,rgba(255,255,255,.94),rgba(255,249,253,.88)); }
+@media (prefers-reduced-motion: reduce) {
+  .auth-background-video { display: none; }
+  .auth-background { background: radial-gradient(ellipse at 50% 30%,#f6dbea,#e6cae8 52%,#d8c5e7); }
+  .auth-ambient-one,.auth-ambient-two,.auth-live i,.auth-wave i,.auth-mark span { animation: none !important; }
+}

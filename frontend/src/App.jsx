@@ -47,7 +47,7 @@ export default function App() {
 
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-brand/15 bg-white/80 shadow-[0_6px_24px_-18px_rgba(119,35,78,.45)] backdrop-blur-xl">
+      <header className={`sticky top-0 z-20 border-b border-brand/15 bg-white/80 shadow-[0_6px_24px_-18px_rgba(119,35,78,.45)] backdrop-blur-xl ${user ? "" : "auth-site-header"}`}>
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <Link to="/" className="text-lg font-bold text-brand">
             PrepMind AI <span className="hidden text-xs font-normal text-ink/55 sm:inline">Prepare Smarter. Perform Better.</span>

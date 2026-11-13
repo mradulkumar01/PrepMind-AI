@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api.js";
 
-const INTERVIEW_VIDEO = "https://videos.pexels.com/video-files/5442623/5442623-hd_1920_1080_25fps.mp4";
+const INTERVIEW_VIDEO = "https://videos.pexels.com/video-files/7101912/7101912-hd_1920_1080_25fps.mp4";
 
 export default function Auth({ onAuth }) {
   const [mode, setMode] = useState("login");
@@ -78,8 +78,17 @@ export default function Auth({ onAuth }) {
 
   return (
     <section className="auth-page" aria-label="PrepMind account access">
+      <div className="auth-background" aria-hidden="true">
+        <video ref={videoRef} className="auth-background-video" src={INTERVIEW_VIDEO} muted loop playsInline preload="metadata" />
+        <div className="auth-background-shade" />
+        <div className="auth-background-grain" />
+      </div>
       <div className="auth-ambient auth-ambient-one" aria-hidden="true" />
       <div className="auth-ambient auth-ambient-two" aria-hidden="true" />
+      <button className="auth-video-toggle auth-background-toggle" type="button" onClick={toggleVideo} aria-label={videoPlaying ? "Pause background video" : "Play background video"}>
+        <span aria-hidden="true">{videoPlaying ? "Ⅱ" : "▶"}</span>
+        <span>{videoPlaying ? "Pause motion" : "Play motion"}</span>
+      </button>
 
       <div className="auth-layout">
         <section
@@ -89,25 +98,8 @@ export default function Auth({ onAuth }) {
           onPointerLeave={resetTilt}
           aria-label="Preview of a PrepMind video interview"
         >
-          <video
-            ref={videoRef}
-            className="auth-video"
-            src={INTERVIEW_VIDEO}
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            aria-hidden="true"
-          />
-          <div className="auth-video-shade" aria-hidden="true" />
-          <div className="auth-video-grain" aria-hidden="true" />
-
           <div className="auth-visual-top">
             <span className="auth-live"><i /> INTERVIEW PREVIEW</span>
-            <button className="auth-video-toggle" type="button" onClick={toggleVideo} aria-label={videoPlaying ? "Pause interview video" : "Play interview video"}>
-              <span aria-hidden="true">{videoPlaying ? "Ⅱ" : "▶"}</span>
-              <span>{videoPlaying ? "Pause" : "Play"}</span>
-            </button>
           </div>
 
           <div className="auth-visual-copy">
